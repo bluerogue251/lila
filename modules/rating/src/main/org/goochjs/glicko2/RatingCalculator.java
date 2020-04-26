@@ -6,21 +6,21 @@
  */
 package org.goochjs.glicko2;
 
-import java.util.List;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
+
+import java.util.List;
 
 /**
  * This is the main calculation engine based on the contents of Glickman's paper.
  * http://www.glicko.net/glicko/glicko2.pdf
  *
  * @author Jeremy Gooch
- *
  */
 public class RatingCalculator {
 
-  private final static double DEFAULT_RATING =  1500.0;
-  private final static double DEFAULT_DEVIATION =  350;
+  private final static double DEFAULT_RATING = 1500.0;
+  private final static double DEFAULT_DEVIATION = 350;
   private final static double DEFAULT_VOLATILITY =  0.06;
   private final static double DEFAULT_TAU =  0.75;
   private final static double MULTIPLIER =  173.7178;

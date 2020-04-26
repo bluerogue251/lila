@@ -28,3 +28,6 @@ RUNNING_PID
 /modules/*/.classpath
 /modules/*/.project
 /modules/*/.settings/
+
+# IntelliJ auto-generated files
+.idea/*
