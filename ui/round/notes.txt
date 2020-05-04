@@ -1,0 +1,50 @@
+# When the opponent moves:
+
+site/src/socket.js/StrongSocket.connect.ws.onmessage
+    round/src/socket.ts/RoundSocket.receive()
+        RoundController.apiMove()
+            Chessground.Api.move() # Animates the state transition between old and new state
+                Chessground.Board.baseMove() # Performs the mutation on the state
+
+
+
+
+
+
+# When the user drags a piece to make a move:
+
+events.ts dragOrDraw
+    drag.ts#end
+        Chessground.Board.userMove()
+        drag.ts#end:218s.dom.redraw
+
+# When the user clicks two squares to make a move:
+
+events.ts startDragOrDraw
+    drag.ts#start
+        anim(state => board.selectSquare(state, origin), s)
+            Chessground.Board.selectSquare()
+                Chessground.Board.userMove()
+
+
+# And then:
+
+Chessground.Board.userMove()
+    Chessground.Board.baseUserMove()
+       Chessground.Board.baseMove()
+            Chessground.Board.callUserFunction(state.events.move)
+                RoundController.onMove() # Plays sounds
+    Chessground.Board.callUserFunction(state.movable.events.after) 
+        RoundController.onUserMove() # Sends move to server
+            RoundController.sendMove()
+                RoundController.actualSendMove()
+                    this.transientMove.register();
+
+# And this also happens later, and can move the piece if the piece had been reset due to timeout (What if it was moved somewhere else first, though?)
+
+site/src/socket.js/StrongSocket.connect.ws.onmessage
+    round/src/socket.ts/RoundSocket.receive()
+        RoundController.apiMove()
+            Chessground.Api.move()
+                Chessground.Board.baseMove() # Actually moves the piece on the user's screen (?????? This does not match what I usually see though...)
+            if (...sameColorMove) this.transientMove.clear();
