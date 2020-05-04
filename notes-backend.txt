@@ -1,0 +1,31 @@
+(lila-ws) Incoming User Move From Browser:
+
+    FrameHandler:27 channelRead0
+        msg = ClientOut:107 parse
+        RoundClientActor ! msg
+
+    RoundClientActor:111 receives msg of type ClientOut.RoundMove
+        clientIn(ClientIn.Ack(ackId))
+        lilaIn.round(LilaIn.RoundMove(fid, uci, blur, lag))
+
+
+
+(lila) Incoming User Move From lila-ws
+[TODO]
+
+
+
+
+
+(lila-ws) Incoming FEN from Lila:
+io.lettuce.core.pubsub.PubSubEndpoint:180 notifyListeners()
+    lila.ws.Lila:117 anonymous instance of RedisPubSubAdapter#message
+        LilaOut:236 #read()
+            LilaOut:252 RoundVersion.apply()
+        LilaHandler:124 roundHandler
+            case RoundVersion(gameId, version, flags, tpe, data) =>
+                  val versioned = ClientIn.RoundVersioned(version, flags, tpe, data)
+                  lila.ws.History.round.add(gameId, versioned)
+                  lila.ws.Bus.publish(_ room gameId, versioned) # This is what actually sends the move and resulting position to the players
+                  lila.ws.Fens.move(gameId, data)
+
