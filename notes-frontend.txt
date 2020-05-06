@@ -48,3 +48,22 @@ site/src/socket.js/StrongSocket.connect.ws.onmessage
             Chessground.Api.move()
                 Chessground.Board.baseMove() # Can move the piece if previously reset due to timeout (What if it was moved somewhere else first, though?)
             if (...sameColorMove) this.transientMove.clear();
+
+
+
+
+
+# Relevant portion of the state stored in Chessground.Board.ts:
+
+state: {
+  lastMove: ["f7", "f5"]
+  pieces: {
+    a1: {role: "rook", color: "white"},
+    a2: {role: "pawn", color: "white"},
+    a7: {role: "pawn", color: "black"},
+    a8: {role: "rook", color: "black"},
+    // ...
+  },
+  turnColor: "black",
+  // ... are there other relevant portions?
+}

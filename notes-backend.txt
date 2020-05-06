@@ -11,9 +11,20 @@
 
 
 (lila) Incoming User Move From lila-ws
-[TODO]
-
-
+io.lettuce.core.pubsub.PubSubEndpoint:180 #notifyListeners
+    lila.socket.RemoteSocket:117 #subscribe
+            lila.round.RoundSocket:152 remoteSocketApi.subscribe("r-in", Protocol.In.reader)(
+                                            roundHandler orElse remoteSocketApi.baseHandler
+                                          ) >>- send(P.Out.boot)
+                lila.round.RoundSocket:237 #reader
+                    lila.round.RoundSocket:263 # PlayerMove(...)
+                lila.round.RoundSocket:88 #roundHandler
+                    lila.round.RoundSocket:90 #tellRound(fullId.gameId, HumanPlay(fullId.playerId, uci, blur, lag, none))
+                        lila.round.RoundSocket:86 #tellRound
+                            lila.hub.DuctConcMap:18 #tell  ductByGameId ! msg
+                                lila.round.RoundDuct:111   val process: Duct.ReceiveAsync = {
+                                    lila.round.RoundDuct:224   case p: HumanPlay =>
+                                        [TODO]
 
 
 
