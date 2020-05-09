@@ -24,7 +24,39 @@ io.lettuce.core.pubsub.PubSubEndpoint:180 #notifyListeners
                             lila.hub.DuctConcMap:18 #tell  ductByGameId ! msg
                                 lila.round.RoundDuct:111   val process: Duct.ReceiveAsync = {
                                     lila.round.RoundDuct:224   case p: HumanPlay =>
-                                        [TODO]
+
+                                              // Loads lila.game.Game from game cache
+                                              // Wraps the game in the POV of the current player
+                                              // Runs the block of code with the POV as the argument
+                                              // The block of code returns a Fu[Events], which the handle() method then publishes
+
+                                              // handle(playerId: ID)(f: (pov) => Fu[Events]) under the hood calls:
+                                              // proxy.withPov(playerId) { pov => publishEvents(f(pov)) } -- it's this publishing that seems to affect the game.
+                                              // And f(p: POV):
+                                              //       - Uses scalachess to apply the move to the pov.game in memory
+                                              //       - Updates the GameProxy.cache with the new state in memory
+                                              //       - Asks GameProxy to asynchronously flush the new state to the mongo game5 collection
+
+                                              handle(p.playerId) { pov =>
+                                                  [...]
+                                                  if (pov.game.outoftime(withGrace = true)) finisher.outOfTime(pov.game)
+                                                  else player.human(p, this)(pov)
+                                                      applyUci(game, uci, blur, lag)
+                                                        .flatMap {
+                                                          case Flagged => finisher.outOfTime(game)
+                                                          case MoveApplied(progress, moveOrDrop) =>
+                                                            proxy.save(progress) >>
+                                                              postHumanOrBotPlay(round, pov, progress, moveOrDrop)
+                                                                    Player#notifyMove()
+                                                                         lila.common.Bus.publish(MoveGameEvent) // Unclear who receives these...
+                                                                         return Fu[Events] with a List(Event.Move) // To be published by the caller, this event is what affects players
+                                                        }
+
+
+
+... May want to check in RoundDuct for flagging, as there are some flagging-related messages in there.
+
+
 
 
 
