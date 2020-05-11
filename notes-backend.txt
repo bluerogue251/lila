@@ -25,7 +25,7 @@ io.lettuce.core.pubsub.PubSubEndpoint:180 #notifyListeners
                                 lila.round.RoundDuct:111   val process: Duct.ReceiveAsync = {
                                     lila.round.RoundDuct:224   case p: HumanPlay =>
 
-                                              // Loads lila.game.Game from game cache
+                                              // Ensure lila.game.Game is loaded in game cache
                                               // Wraps the game in the POV of the current player
                                               // Runs the block of code with the POV as the argument
                                               // The block of code returns a Fu[Events], which the handle() method then publishes
@@ -55,8 +55,59 @@ io.lettuce.core.pubsub.PubSubEndpoint:180 #notifyListeners
 
 
 ... May want to check in RoundDuct for flagging, as there are some flagging-related messages in there.
+... But I ALSO may want to check for "opponent flagged" messages sent from the browser
+     --> Because what if the scenario is that player A made a move and received a reply for it
+     --> Player B Makes a move and gets a confirmation, but it fails to be recorded in mongo and it never makes it back to player A
+     --> Player B Browser sends a "flagged" event to the backend...
+     ... but that doesn't really match the GitHub issue description, where the issue says both players agree Player A made the last move.
+     ... but that DOES somewhat match what I've experienced in the past.
+
+... The move fails to be persisted in mongo AND the in-memory GameProxy sate fails to be updated. (hmm, except that it _was_ persisted in mongo, at least eventually)
+... OR the move WAS persisted in mongo, but the in-memory GameProxy state is somehow not updated? Perhaps because it's a second lichess instance that boots up and instantiates the cache before the original thing is saved in mongo by the old lichess instance?
+... But both players have received the result of White's move in their browsers.
+... The clock is ticking for Black in both browsers.
+... Eventually once Black's clock expires in White's browser. White sends a "Black Flagged" websocket message to the server.
+... The server records the White flagged.
 
 
+... Interestingly, there are not always move times recorded towards the very end. There is always at least one move recorded as taking a very long time.
+    It's always the last move for which the time was recorded (although it's sometimes not the actual last move recorded -- sometimes there are moves recorded at the end with
+    no accompanying move-time visible in the UI...
+
+
+... There also is the concept of a QuietFlag which is a background "sweeper" job called "Titivate"
+    I hypothesize that Titivate is NOT the source of this flagging, as the first sweep happens 1 hour after the game is created,
+    whereas we see this issue occur much sooner than that. Since the only other source of flagging is a "ClientFlag" or a "ClientMove" flag-check,
+    I think it must be due to one of those. Good next step: narrow it down to one or the other of those remaining two.
+
+... Initial uncertain hypothesis: it comes from a "ClientFlag", since if it came from a "ClientMove", then there would have to have been a recent move...
+    But it seems that the player who flags always moves then waits a significant period of time before flagging.
+    It would seem that around the time that they flag, there is no ClientMove message being sent from clients (unless it was a resend of a ClientMove???)
+
+... In both games
+      https://lichess.org/klq2LGRo
+      https://lichess.org/6P883LSk
+    It appears that around the last move played, the two players have within 30 seconds of the same amount of time on their clocks before the issue happens.
+    Might be relevant that they have similar amounts of time.
+
+... There are examples of both White losing _and_ Black losing -- so it doesn't appear unique to a specific color.
+
+... Wild guess: it could also be a bug that surfaces when clock data is reloaded fresh from Mongo upon server restart???
+    And then the browser sends the flag, but it gets mistaken for the wrong player on load...
+    Let's try it....
+
+... The other thing is that there are at least two checks for flagging implemented as part of a human move
+      - RoundDuct:226 --> else if (pov.game.outoftime(withGrace = true)) finisher.outOfTime(pov.game)
+      - Player:36 --> case Flagged => finisher.outOfTime(game) (after "applying the UCI" using scalachess)
+    It's unclear if either is subject to race conditions related to the state of the GameProxy
+
+
+... Unrelatedly, I found a situation where two players can be playing an out-of-sync game: http://localhost:9663/k6scdt0S
+    Where black didn't think their knight was on C6.
+    See screenshots....
+
+... Could a retry of a previous move by Player B which is newly possible due to an updated position have caused the game state to flip,
+    but no-one receives word of that new state, and therefore when the browser sends the "flag" message, the wrong person gets flagged?
 
 
 
