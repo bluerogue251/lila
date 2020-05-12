@@ -44,6 +44,8 @@ final private[round] class RoundDuct(
 
   private var mightBeSimul = true // until proven otherwise
 
+  private var processedNf6Count: Int = 0
+
   final private class Player(color: Color) {
 
     private var offlineSince: Option[Long] = nowMillis.some
@@ -222,9 +224,23 @@ final private[round] class RoundDuct(
 
     case p: HumanPlay =>
       handle(p.playerId) { pov =>
-        if (pov.player.isAi) fufail(s"player $pov can't play AI")
+        /*
+         * Simulate receiving the duplicate nf6 move exactly twice.
+         * The first time is when it was played on purpose by the user.
+         * The second time is an accidental duplicate message, received
+         *    approximately thirty seconds after the previous move.
+         */
+        val isNf6: Boolean = p.uci.uci.equals("g8f6")
+        if (isNf6 && processedNf6Count == 2) {
+          // Ignore, we've already received the duplicate message
+          fuccess(Nil)
+        } else if (isNf6 && processedNf6Count == 1 && DateTime.now().minusSeconds(31).isBefore(pov.game.movedAt)) {
+          // Wait until 30 seconds after the last move to "receive" the duplicate message
+          fuccess(Nil)
+        } else if (pov.player.isAi) fufail(s"player $pov can't play AI")
         else if (pov.game.outoftime(withGrace = true)) finisher.outOfTime(pov.game)
         else {
+          if (isNf6) processedNf6Count += 1
           recordLag(pov)
           player.human(p, this)(pov)
         }

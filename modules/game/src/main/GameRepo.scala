@@ -1,19 +1,19 @@
 package lila.game
 
 import scala.util.Random
-
-import chess.format.{ FEN, Forsyth }
-import chess.{ Color, Status }
+import chess.format.{FEN, Forsyth}
+import chess.{Color, Status}
 import org.joda.time.DateTime
-import reactivemongo.akkastream.{ cursorProducer, AkkaStreamCursor }
-import reactivemongo.api.commands.WriteResult
+import reactivemongo.akkastream.{AkkaStreamCursor, cursorProducer}
+import reactivemongo.api.commands.{UpdateWriteResult, WriteError, WriteResult}
 import reactivemongo.api.ReadPreference
 import reactivemongo.api.WriteConcern
-
 import lila.db.BSON.BSONJodaDateTimeHandler
 import lila.db.dsl._
 import lila.db.isDuplicateKey
 import lila.user.User
+
+import scala.concurrent.Future
 
 final class GameRepo(val coll: Coll)(implicit ec: scala.concurrent.ExecutionContext) {
 
@@ -158,7 +158,26 @@ final class GameRepo(val coll: Coll)(implicit ec: scala.concurrent.ExecutionCont
       .void
 
   def update(progress: Progress): Funit =
-    saveDiff(progress.origin, GameDiff(progress.origin, progress.game))
+    // Simulate a mongo write failure when persisting ply 6
+    if (progress.origin.chess.turns == 5 && progress.game.chess.turns == 6) {
+      failToSaveDiff()
+    } else {
+      saveDiff(progress.origin, GameDiff(progress.origin, progress.game))
+    }
+
+  private def failToSaveDiff(): Funit = Future {
+    System.out.println("Failing to save the duplicate move 6. ... nf6")
+    UpdateWriteResult(
+      ok = false,
+      n = 0,
+      nModified = 0,
+      upserted = Seq.empty,
+      writeErrors = Seq(WriteError(0, 1, "Failed to save")),
+      writeConcernError = None,
+      code = Some(1),
+      errmsg = Some("Failed to save")
+    )
+  }
 
   private def saveDiff(origin: Game, diff: GameDiff.Diff): Funit = diff match {
     case (Nil, Nil) => funit
