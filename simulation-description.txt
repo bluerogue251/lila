@@ -1,0 +1,21 @@
+Game:
+
+1. e4 nf6
+2. e5 ng8
+3. e6
+
+
+The following things occur:
+
+1) On 1. ... nf6, the client never receives an "ack" from lila-ws, causing the client to retry sending the message indefinitely.
+
+2) After 3. e6 the client retries cause a duplicate message of 1. ... nf6 to arrives server-side.
+   Because 3. ... nf6 would be a valid move, lila applies it as ply 6 to in the GameProxy in-memory cache.
+
+3) The ClientIn.RoundVersion messages for 3. ... nf6 are lost in transit before the clients receive them.
+
+4) On the next scheduled flush of GameProxy state to mongodb, containing the move 3. ... nf6, the mongo write fails.
+
+Expected behavior: after time runs out, White should win since White made the last recorded move.
+
+Actual behavior: Black wins on time.
