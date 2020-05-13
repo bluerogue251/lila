@@ -234,8 +234,8 @@ final private[round] class RoundDuct(
         if (isNf6 && processedNf6Count == 2) {
           // Ignore, we've already received the duplicate message
           fuccess(Nil)
-        } else if (isNf6 && processedNf6Count == 1 && DateTime.now().minusSeconds(31).isBefore(pov.game.movedAt)) {
-          // Wait until 30 seconds after the last move to "receive" the duplicate message
+        } else if (isNf6 && processedNf6Count == 1 && DateTime.now().minusSeconds(4).isBefore(pov.game.movedAt)) {
+          // Wait until a little over 3 seconds (the scheduled flush timeout) after the last move to "receive" the duplicate message
           fuccess(Nil)
         } else if (pov.player.isAi) fufail(s"player $pov can't play AI")
         else if (pov.game.outoftime(withGrace = true)) finisher.outOfTime(pov.game)

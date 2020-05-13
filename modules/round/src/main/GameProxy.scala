@@ -108,7 +108,8 @@ private object GameProxy {
   )
 
   // must be way under the round duct termination delay (60s)
-  private val scheduleDelay = 30.seconds
+  // Decrease the schedule delay just so the video demo can be shorter
+  private val scheduleDelay = 3.seconds
 
   private val emptyCancellable = new Cancellable {
     def cancel()    = true
