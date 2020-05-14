@@ -24,7 +24,7 @@ final private class Player(
       pov: Pov
   )(implicit proxy: GameProxy): Fu[Events] =
     play match {
-      case HumanPlay(_, uci, blur, lag, _, ply) =>
+      case HumanPlay(_, uci, blur, ply, lag, _) =>
         pov match {
           case Pov(game, _) if game.turns > Game.maxPlies =>
             round ! TooManyPlies
