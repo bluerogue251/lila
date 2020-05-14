@@ -269,7 +269,7 @@ object RoundSocket {
                 } yield PlayerDo(FullId(fullId), tpe)
             }
           case "r/move" =>
-            raw.get(6) {
+            raw.get(5) {
               // TODO remove length-5 array case after corresponding lila-ws deploy
               case Array(fullId, uciS, blurS, lagS, mtS) =>
                 Uci(uciS) map { uci =>
