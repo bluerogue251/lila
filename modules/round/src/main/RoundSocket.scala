@@ -1,26 +1,26 @@
 package lila.round
 
-import akka.actor.{ActorSystem, Cancellable, CoordinatedShutdown, Scheduler}
+import akka.actor.{ ActorSystem, Cancellable, CoordinatedShutdown, Scheduler }
 import play.api.libs.json._
-
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
+
 import actorApi._
 import actorApi.round._
 import chess.format.Uci
-import chess.{Black, Centis, Color, MoveMetrics, Speed, White}
-import lila.chat.{BusChan, Chat}
-import lila.common.{Bus, IpAddress, Lilakka}
-import lila.game.Game.{FullId, PlayerId}
-import lila.game.{Event, Game, Ply, Pov}
-import lila.hub.actorApi.map.{Exists, Tell, TellAll, TellIfExists, TellMany}
-import lila.hub.actorApi.round.{Abort, Berserk, RematchNo, RematchYes, Resign, TourStanding}
+import chess.{ Black, Centis, Color, MoveMetrics, Speed, White }
+import lila.chat.{ BusChan, Chat }
+import lila.common.{ Bus, IpAddress, Lilakka }
+import lila.game.Game.{ FullId, PlayerId }
+import lila.game.{ Event, Game, Ply, Pov }
+import lila.hub.actorApi.map.{ Exists, Tell, TellAll, TellIfExists, TellMany }
+import lila.hub.actorApi.round.{ Abort, Berserk, RematchNo, RematchYes, Resign, TourStanding }
 import lila.hub.actorApi.socket.remote.TellSriIn
 import lila.hub.actorApi.tv.TvSelect
 import lila.hub.DuctConcMap
-import lila.room.RoomSocket.{Protocol => RP, _}
-import lila.socket.RemoteSocket.{Protocol => P, _}
-import lila.socket.Socket.{SocketVersion, makeMessage}
+import lila.room.RoomSocket.{ Protocol => RP, _ }
+import lila.socket.RemoteSocket.{ Protocol => P, _ }
+import lila.socket.Socket.{ makeMessage, SocketVersion }
 import lila.user.User
 
 final class RoundSocket(
