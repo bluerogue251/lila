@@ -1,11 +1,12 @@
 package lila.round
 
-import chess.format.{Forsyth, Uci}
-import chess.{Centis, MoveMetrics, MoveOrDrop, Status}
-import actorApi.round.{DrawNo, ForecastPlay, HumanPlay, TakebackNo, TooManyPlies}
+import chess.format.{ Forsyth, Uci }
+import chess.{ Centis, MoveMetrics, MoveOrDrop, Status }
+
+import actorApi.round.{ DrawNo, ForecastPlay, HumanPlay, TakebackNo, TooManyPlies }
 import lila.game.actorApi.MoveGameEvent
 import lila.common.Bus
-import lila.game.{Game, Ply, Pov, Progress, UciMemo}
+import lila.game.{ Game, Ply, Pov, Progress, UciMemo }
 import lila.game.Game.PlayerId
 
 final private class Player(
