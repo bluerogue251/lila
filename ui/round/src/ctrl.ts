@@ -277,10 +277,10 @@ export default class RoundController {
     this.redraw();
   }
 
-  sendMove = (movePly: number, orig: cg.Key, dest: cg.Key, prom: cg.Role | undefined, meta: cg.MoveMetadata) => {
+  sendMove = (ply: number, orig: cg.Key, dest: cg.Key, prom: cg.Role | undefined, meta: cg.MoveMetadata) => {
     const move: SocketMove = {
       u: orig + dest,
-      p: movePly
+      p: ply
     };
     if (prom) move.u += (prom === 'knight' ? 'n' : prom[0]);
     if (blur.get()) move.b = 1;
@@ -296,11 +296,11 @@ export default class RoundController {
     }
   };
 
-  sendNewPiece = (dropPly: number, role: cg.Role, key: cg.Key, isPredrop: boolean): void => {
+  sendNewPiece = (ply: number, role: cg.Role, key: cg.Key, isPredrop: boolean): void => {
     const drop: SocketDrop = {
       role: role,
       pos: key,
-      p: dropPly
+      p: ply
     };
     if (blur.get()) drop.b = 1;
     this.resign(false);

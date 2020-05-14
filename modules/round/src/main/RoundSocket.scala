@@ -270,9 +270,9 @@ object RoundSocket {
             }
           case "r/move" =>
             raw.get(5) {
-              case Array(fullId, uciS, blurS, lagS, mtS, movePly) =>
+              case Array(fullId, uciS, blurS, lagS, mtS, ply) =>
                 Uci(uciS) map { uci =>
-                  PlayerMove(FullId(fullId), uci, P.In.boolean(blurS), MoveMetrics(centis(lagS), centis(mtS)), ply(movePly))
+                  PlayerMove(FullId(fullId), uci, P.In.boolean(blurS), MoveMetrics(centis(lagS), centis(mtS)), readPly(ply))
                 }
             }
           case "chat/say" =>
@@ -321,8 +321,8 @@ object RoundSocket {
         else if (s == "b") Some(Black)
         else None
 
-      // TODO remove null check after first deploy
-      private def ply(s: String): Option[Int] =
+      // TODO remove null check after corresponding lila-ws deploy
+      private def readPly(s: String): Option[Int] =
         if (s == null) None
         else s.toIntOption
     }
