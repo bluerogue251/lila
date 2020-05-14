@@ -144,12 +144,12 @@ export default class RoundController {
 
   private onUserMove = (orig: cg.Key, dest: cg.Key, meta: cg.MoveMetadata) => {
     if (li.ab && (!this.keyboardMove || !this.keyboardMove.usedSan)) li.ab.move(this, meta);
-    if (!promotion.start(this, orig, dest, meta)) this.sendMove(orig, dest, undefined, meta);
+    if (!promotion.start(this, orig, dest, meta)) this.sendMove(this.ply + 1, orig, dest, undefined, meta);
   };
 
   private onUserNewPiece = (role: cg.Role, key: cg.Key, meta: cg.MoveMetadata) => {
     if (!this.replaying() && crazyValid(this.data, role, key)) {
-      this.sendNewPiece(role, key, !!meta.predrop);
+      this.sendNewPiece(this.ply + 1, role, key, !!meta.predrop);
     } else this.jump(this.ply);
   };
 
@@ -277,9 +277,10 @@ export default class RoundController {
     this.redraw();
   }
 
-  sendMove = (orig: cg.Key, dest: cg.Key, prom: cg.Role | undefined, meta: cg.MoveMetadata) => {
+  sendMove = (movePly: number, orig: cg.Key, dest: cg.Key, prom: cg.Role | undefined, meta: cg.MoveMetadata) => {
     const move: SocketMove = {
-      u: orig + dest
+      u: orig + dest,
+      p: movePly
     };
     if (prom) move.u += (prom === 'knight' ? 'n' : prom[0]);
     if (blur.get()) move.b = 1;
@@ -295,10 +296,11 @@ export default class RoundController {
     }
   };
 
-  sendNewPiece = (role: cg.Role, key: cg.Key, isPredrop: boolean): void => {
+  sendNewPiece = (dropPly: number, role: cg.Role, key: cg.Key, isPredrop: boolean): void => {
     const drop: SocketDrop = {
       role: role,
-      pos: key
+      pos: key,
+      p: dropPly
     };
     if (blur.get()) drop.b = 1;
     this.resign(false);
@@ -336,6 +338,8 @@ export default class RoundController {
     this.data[c === this.data.player.color ? 'player' : 'opponent'];
 
   apiMove = (o: ApiMove): void => {
+    // TODO check ApiMove ply against current ply;
+    
     const d = this.data,
       playing = this.isPlaying();
 

@@ -24,12 +24,12 @@ final private class Player(
       pov: Pov
   )(implicit proxy: GameProxy): Fu[Events] =
     play match {
-      case HumanPlay(_, uci, blur, lag, _) =>
+      case HumanPlay(_, uci, blur, lag, _, movePly) =>
         pov match {
           case Pov(game, _) if game.turns > Game.maxPlies =>
             round ! TooManyPlies
             fuccess(Nil)
-          case Pov(game, color) if game playableBy color =>
+          case Pov(game, color) if game.playableBy(color) && movePly.contains(game.turns + 1) =>
             applyUci(game, uci, blur, lag)
               .prefixFailuresWith(s"$pov ")
               .fold(errs => fufail(ClientError(errs.toString)), fuccess)
@@ -39,10 +39,10 @@ final private class Player(
                   proxy.save(progress) >>
                     postHumanOrBotPlay(round, pov, progress, moveOrDrop)
               }
-          case Pov(game, _) if game.finished           => fufail(ClientError(s"$pov game is finished"))
-          case Pov(game, _) if game.aborted            => fufail(ClientError(s"$pov game is aborted"))
-          case Pov(game, color) if !game.turnOf(color) => fufail(ClientError(s"$pov not your turn"))
-          case _                                       => fufail(ClientError(s"$pov move refused for some reason"))
+          case Pov(game, _) if game.finished                     => fufail(ClientError(s"$pov game is finished"))
+          case Pov(game, _) if game.aborted                      => fufail(ClientError(s"$pov game is aborted"))
+          case Pov(game, _) if !movePly.contains(game.turns + 1) => fufail(ClientError(s"$pov move was for wrong ply"))
+          case _                                                 => fufail(ClientError(s"$pov move refused for some reason"))
         }
     }
 

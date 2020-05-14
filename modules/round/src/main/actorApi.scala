@@ -33,7 +33,8 @@ package round {
       uci: Uci,
       blur: Boolean,
       moveMetrics: MoveMetrics = MoveMetrics(),
-      promise: Option[Promise[Unit]] = None
+      promise: Option[Promise[Unit]] = None,
+      ply: Option[Int]
   )
 
   case class PlayResult(events: Events, fen: String, lastMove: Option[String])

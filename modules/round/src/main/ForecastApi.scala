@@ -54,7 +54,8 @@ final class ForecastApi(coll: Coll, tellRound: TellRound)(implicit ec: scala.con
             playerId = PlayerId(pov.playerId),
             uci = uci,
             blur = true,
-            promise = promise.some
+            promise = promise.some,
+            ply = Some(pov.game.turns + 1)
           )
         )
         saveSteps(pov, steps) >> promise.future

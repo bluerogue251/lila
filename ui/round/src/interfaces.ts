@@ -28,11 +28,13 @@ export interface SocketOpts {
 export interface SocketMove {
   u: Uci;
   b?: 1;
+  p: number;
 }
 export interface SocketDrop {
   role: cg.Role;
   pos: cg.Key;
   b?: 1;
+  p: number;
 }
 
 export type EncodedDests = string | {

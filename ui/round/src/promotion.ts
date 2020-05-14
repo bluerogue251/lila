@@ -19,7 +19,7 @@ let prePromotionRole: cg.Role | undefined;
 
 export function sendPromotion(ctrl: RoundController, orig: cg.Key, dest: cg.Key, role: cg.Role, meta: cg.MoveMetadata): boolean {
   ground.promote(ctrl.chessground, dest, role);
-  ctrl.sendMove(orig, dest, role, meta);
+  ctrl.sendMove(ctrl.ply + 1, orig, dest, role, meta);
   return true;
 }
 
