@@ -95,7 +95,7 @@ final class RoundSocket(
 
   private lazy val roundHandler: Handler = {
     case Protocol.In.PlayerMove(fullId, uci, blur, lag, ply) if !stopping =>
-      tellRound(fullId.gameId, HumanPlay(fullId.playerId, uci, blur, lag, none, ply))
+      tellRound(fullId.gameId, HumanPlay(fullId.playerId, uci, blur, ply, lag, none))
     case Protocol.In.PlayerDo(id, tpe) if !stopping =>
       tpe match {
         case "moretime"     => tellRound(id.gameId, Moretime(id.playerId))
@@ -269,12 +269,7 @@ object RoundSocket {
                 } yield PlayerDo(FullId(fullId), tpe)
             }
           case "r/move" =>
-            raw.get(5) {
-              // TODO remove length-5 array case after corresponding lila-ws deploy
-              case Array(fullId, uciS, blurS, lagS, mtS) =>
-                Uci(uciS) map { uci =>
-                  PlayerMove(FullId(fullId), uci, P.In.boolean(blurS), MoveMetrics(centis(lagS), centis(mtS)), none[Ply])
-                }
+            raw.get(6) {
               case Array(fullId, uciS, blurS, lagS, mtS, ply) =>
                 Uci(uciS) map { uci =>
                   PlayerMove(FullId(fullId), uci, P.In.boolean(blurS), MoveMetrics(centis(lagS), centis(mtS)), readPly(ply))

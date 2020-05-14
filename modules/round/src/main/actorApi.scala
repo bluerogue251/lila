@@ -33,9 +33,9 @@ package round {
       playerId: PlayerId,
       uci: Uci,
       blur: Boolean,
+      ply: Option[Ply],
       moveMetrics: MoveMetrics = MoveMetrics(),
-      promise: Option[Promise[Unit]] = None,
-      ply: Option[Ply]
+      promise: Option[Promise[Unit]] = None
   )
 
   case class PlayResult(events: Events, fen: String, lastMove: Option[String])
