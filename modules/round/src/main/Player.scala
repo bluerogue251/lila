@@ -24,12 +24,12 @@ final private class Player(
       pov: Pov
   )(implicit proxy: GameProxy): Fu[Events] =
     play match {
-      case HumanPlay(_, uci, blur, lag, _, movePly) =>
+      case HumanPlay(_, uci, blur, lag, _, ply) =>
         pov match {
           case Pov(game, _) if game.turns > Game.maxPlies =>
             round ! TooManyPlies
             fuccess(Nil)
-          case Pov(game, color) if game.playableBy(color) && movePly.contains(game.turns + 1) =>
+          case Pov(game, color) if game.playableBy(color) && plyMatches(game, ply) =>
             applyUci(game, uci, blur, lag)
               .prefixFailuresWith(s"$pov ")
               .fold(errs => fufail(ClientError(errs.toString)), fuccess)
@@ -39,10 +39,11 @@ final private class Player(
                   proxy.save(progress) >>
                     postHumanOrBotPlay(round, pov, progress, moveOrDrop)
               }
-          case Pov(game, _) if game.finished                     => fufail(ClientError(s"$pov game is finished"))
-          case Pov(game, _) if game.aborted                      => fufail(ClientError(s"$pov game is aborted"))
-          case Pov(game, _) if !movePly.contains(game.turns + 1) => fufail(ClientError(s"$pov move was for wrong ply"))
-          case _                                                 => fufail(ClientError(s"$pov move refused for some reason"))
+          case Pov(game, _) if game.finished           => fufail(ClientError(s"$pov game is finished"))
+          case Pov(game, _) if game.aborted            => fufail(ClientError(s"$pov game is aborted"))
+          case Pov(game, color) if !game.turnOf(color) => fufail(ClientError(s"$pov not your turn"))
+          case Pov(game, _) if !plyMatches(game, ply)  => fufail(ClientError(s"$pov wrong move ply"))
+          case _                                       => fufail(ClientError(s"$pov move refused for some reason"))
         }
     }
 
@@ -180,4 +181,9 @@ final private class Player(
       case status @ (Status.Stalemate | Status.Draw) => finisher.other(game, _ => status, None)
       case _                                         => fuccess(Nil)
     }
+
+  // We can only verify the ply if it was provided by the client. If missing, leniently default to `true`.
+  private def plyMatches(game: Game, ply: Option[Int]): Boolean = {
+    ply.forall(_ == game.turns + 1)
+  }
 }
