@@ -1,26 +1,26 @@
 package lila.round
 
-import akka.actor.{ ActorSystem, Cancellable, CoordinatedShutdown, Scheduler }
+import akka.actor.{ActorSystem, Cancellable, CoordinatedShutdown, Scheduler}
 import play.api.libs.json._
+
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
-
 import actorApi._
 import actorApi.round._
 import chess.format.Uci
-import chess.{ Black, Centis, Color, MoveMetrics, Speed, White }
-import lila.chat.{ BusChan, Chat }
-import lila.common.{ Bus, IpAddress, Lilakka }
-import lila.game.Game.{ FullId, PlayerId }
-import lila.game.{ Event, Game, Pov }
-import lila.hub.actorApi.map.{ Exists, Tell, TellAll, TellIfExists, TellMany }
-import lila.hub.actorApi.round.{ Abort, Berserk, RematchNo, RematchYes, Resign, TourStanding }
+import chess.{Black, Centis, Color, MoveMetrics, Speed, White}
+import lila.chat.{BusChan, Chat}
+import lila.common.{Bus, IpAddress, Lilakka}
+import lila.game.Game.{FullId, PlayerId}
+import lila.game.{Event, Game, Ply, Pov}
+import lila.hub.actorApi.map.{Exists, Tell, TellAll, TellIfExists, TellMany}
+import lila.hub.actorApi.round.{Abort, Berserk, RematchNo, RematchYes, Resign, TourStanding}
 import lila.hub.actorApi.socket.remote.TellSriIn
 import lila.hub.actorApi.tv.TvSelect
 import lila.hub.DuctConcMap
-import lila.room.RoomSocket.{ Protocol => RP, _ }
-import lila.socket.RemoteSocket.{ Protocol => P, _ }
-import lila.socket.Socket.{ makeMessage, SocketVersion }
+import lila.room.RoomSocket.{Protocol => RP, _}
+import lila.socket.RemoteSocket.{Protocol => P, _}
+import lila.socket.Socket.{SocketVersion, makeMessage}
 import lila.user.User
 
 final class RoundSocket(
@@ -236,7 +236,7 @@ object RoundSocket {
 
       case class PlayerOnlines(onlines: Iterable[(Game.Id, Option[RoomCrowd])])                          extends P.In
       case class PlayerDo(fullId: FullId, tpe: String)                                                   extends P.In
-      case class PlayerMove(fullId: FullId, uci: Uci, blur: Boolean, lag: MoveMetrics, ply: Option[Int]) extends P.In
+      case class PlayerMove(fullId: FullId, uci: Uci, blur: Boolean, lag: MoveMetrics, ply: Option[Ply]) extends P.In
       case class PlayerChatSay(gameId: Game.Id, userIdOrColor: Either[User.ID, Color], msg: String)
           extends P.In
       case class WatcherChatSay(gameId: Game.Id, userId: User.ID, msg: String)                    extends P.In
@@ -269,7 +269,12 @@ object RoundSocket {
                 } yield PlayerDo(FullId(fullId), tpe)
             }
           case "r/move" =>
-            raw.get(5) {
+            raw.get(6) {
+              // TODO remove length-5 array case after corresponding lila-ws deploy
+              case Array(fullId, uciS, blurS, lagS, mtS) =>
+                Uci(uciS) map { uci =>
+                  PlayerMove(FullId(fullId), uci, P.In.boolean(blurS), MoveMetrics(centis(lagS), centis(mtS)), none[Ply])
+                }
               case Array(fullId, uciS, blurS, lagS, mtS, ply) =>
                 Uci(uciS) map { uci =>
                   PlayerMove(FullId(fullId), uci, P.In.boolean(blurS), MoveMetrics(centis(lagS), centis(mtS)), readPly(ply))
@@ -321,10 +326,7 @@ object RoundSocket {
         else if (s == "b") Some(Black)
         else None
 
-      // TODO remove null check after corresponding lila-ws deploy
-      private def readPly(s: String): Option[Int] =
-        if (s == null) None
-        else s.toIntOption
+      private def readPly(s: String): Option[Ply] = s.toIntOption.map(Ply.apply)
     }
 
     object Out {

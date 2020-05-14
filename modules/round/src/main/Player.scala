@@ -1,12 +1,11 @@
 package lila.round
 
-import chess.format.{ Forsyth, Uci }
-import chess.{ Centis, MoveMetrics, MoveOrDrop, Status }
-
-import actorApi.round.{ DrawNo, ForecastPlay, HumanPlay, TakebackNo, TooManyPlies }
+import chess.format.{Forsyth, Uci}
+import chess.{Centis, MoveMetrics, MoveOrDrop, Status}
+import actorApi.round.{DrawNo, ForecastPlay, HumanPlay, TakebackNo, TooManyPlies}
 import lila.game.actorApi.MoveGameEvent
 import lila.common.Bus
-import lila.game.{ Game, Pov, Progress, UciMemo }
+import lila.game.{Game, Ply, Pov, Progress, UciMemo}
 import lila.game.Game.PlayerId
 
 final private class Player(
@@ -183,7 +182,7 @@ final private class Player(
     }
 
   // We can only verify the ply if it was provided by the client. If missing, leniently default to `true`.
-  private def plyMatches(game: Game, ply: Option[Int]): Boolean = {
-    ply.forall(_ == game.turns + 1)
+  private def plyMatches(game: Game, ply: Option[Ply]): Boolean = {
+    ply.isEmpty || ply.contains(Ply.next(game))
   }
 }

@@ -8,6 +8,7 @@ import chess.{ Color, MoveMetrics }
 
 import lila.common.IpAddress
 import lila.game.Game.PlayerId
+import lila.game.Ply
 import lila.socket.Socket.SocketVersion
 
 case class ByePlayer(playerId: PlayerId)
@@ -34,7 +35,7 @@ package round {
       blur: Boolean,
       moveMetrics: MoveMetrics = MoveMetrics(),
       promise: Option[Promise[Unit]] = None,
-      ply: Option[Int]
+      ply: Option[Ply]
   )
 
   case class PlayResult(events: Events, fen: String, lastMove: Option[String])

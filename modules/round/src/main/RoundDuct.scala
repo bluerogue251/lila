@@ -3,27 +3,19 @@ package lila.round
 import org.joda.time.DateTime
 import ornicar.scalalib.Zero
 import play.api.libs.json._
+
 import scala.concurrent.duration._
 import scala.concurrent.Promise
 import scala.util.chaining._
-
-import actorApi._, round._
-import chess.{ Black, Centis, Color, White }
-import lila.game.Game.{ FullId, PlayerId }
-import lila.game.{ Game, GameRepo, Pov, Event, Progress, Player => GamePlayer }
-import lila.hub.actorApi.round.{
-  Abort,
-  BotPlay,
-  FishnetPlay,
-  FishnetStart,
-  IsOnGame,
-  RematchNo,
-  RematchYes,
-  Resign
-}
+import actorApi._
+import round._
+import chess.{Black, Centis, Color, White}
+import lila.game.Game.{FullId, PlayerId}
+import lila.game.{Event, Game, GameRepo, Ply, Pov, Progress, Player => GamePlayer}
+import lila.hub.actorApi.round.{Abort, BotPlay, FishnetPlay, FishnetStart, IsOnGame, RematchNo, RematchYes, Resign}
 import lila.hub.Duct
-import lila.room.RoomSocket.{ Protocol => RP, _ }
-import lila.socket.Socket.{ makeMessage, GetVersion, SocketVersion }
+import lila.room.RoomSocket.{Protocol => RP, _}
+import lila.socket.Socket.{GetVersion, SocketVersion, makeMessage}
 import lila.socket.UserLagCache
 import lila.user.User
 
@@ -379,7 +371,7 @@ final private[round] class RoundDuct(
       handle { game =>
         forecastApi.nextMove(game, lastMove) map { mOpt =>
           mOpt foreach { move =>
-            this ! HumanPlay(PlayerId(game.player.id), move, blur = false, ply = Some(game.turns + 1))
+            this ! HumanPlay(PlayerId(game.player.id), move, blur = false, ply = Ply.next(game).some)
           }
           Nil
         }
